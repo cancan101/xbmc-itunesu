@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.itunesu" name="iTunesU" version="0.1" provider-name="Alex Rothberg (cancan101)">
+  <requires>
+    <import addon="xbmc.python" version="1.0"/>
+    <import addon="script.module.beautifulsoup" version="3.0.8"/>
+    <import addon="script.module.xbmcswift" version="0.1"/>
+    <import addon="plugin.video.youtube" version="2.1.2"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="addon.py">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <platform>all</platform>
+    <summary>Summary for iTunesU</summary>
+    <description>Description for iTunesU</description>
+  </extension>
+</addon>
