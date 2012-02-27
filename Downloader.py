@@ -90,6 +90,20 @@ def extractSchools(source):
     
     return ret
 
+def extractSchoolCategories(source):
+    soup = BS(source)
+    parent_div = soup.find('div', {'class':'extra-list', 'metrics-loc':'Titledbox_Categories'})    
+    categories_li = parent_div.findAll('li')
+    categories_a = [s.find("a") for s in categories_li]
+    
+    ret = {}
+    for category_a in categories_a:
+        category = htmlentitydecode(category_a.text)
+        href = category_a.get("href")
+        ret[category] = href
+        
+    return ret
+    
 def extractCollections(source):
     soup = BS(source)
     collections_div = soup.findAll('div', "lockup small detailed option podcast video")
@@ -102,24 +116,34 @@ def extractCollections(source):
             logging.debug("Tossing Collection")
             continue
         else:
+            artwork_div = collection_div.find("div", "artwork")
+            thumbnail = None
+            iconImage = None
+            if artwork_div is not None:
+                artwork = artwork_div.find('img', 'artwork src-swap')
+                if artwork is not None:
+                    iconImage = str(artwork.get('src-swap'))
+                    thumbnail = iconImage.replace('.75x75-65', '')
+              
             title = title_orig = htmlentitydecode(collection.text)
             href = collection.get("href")
             count = 0
             while title in ret:
                 count+=1
                 title = "%s alt%d" % (title_orig, count)
-            ret[title] = {'href':href}
+            ret[title] = {'href':href, 'thumbnail':thumbnail, 'iconImage':iconImage}
     
     return ret
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    url = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewSeeAll?id=379060688"#"http://itunes.apple.com/WebObjects/DZR.woa/wa/viewTopCollections?id=379060688"#"http://itunes.apple.com/WebObjects/DZR.woa/wa/viewPodcast?cc=us&id=354868877"#"http://itunes.apple.com/WebObjects/DZR.woa/wa/viewTagged?tag=MIT+OpenCourseWare&id=341593265"
+    url = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewArtist?id=341593265"#"http://itunes.apple.com/WebObjects/DZR.woa/wa/viewTopCollections?id=379060688"#"http://itunes.apple.com/WebObjects/DZR.woa/wa/viewPodcast?cc=us&id=354868877"#"http://itunes.apple.com/WebObjects/DZR.woa/wa/viewTagged?tag=MIT+OpenCourseWare&id=341593265"
     dl = Downloader()
     ret = dl.gotoURL(url)
     if ret:
         source = ret.HTML
-        print extractCollections(source)
+        print extractSchoolCategories(source)
+#        print extractCollections(source)
 #        print extractSchools(source)
 
 
