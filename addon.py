@@ -2,8 +2,14 @@
 
 from xbmcswift import Plugin
 from Downloader import extractSchools, Downloader, extractCollections,\
-    extractSchoolCategories
+    extractSchoolCategories, extractExtras
 import re
+from urlparse import urlparse
+from urllib import urlencode
+try:
+    from urlparse import parse_qs
+except ImportError:
+    from cgi import parse_qs
 
 __plugin_name__ = 'iTunesU'
 __plugin_id__ = 'plugin.video.itunesu'
@@ -14,6 +20,7 @@ VIEW_ITEM_BASE = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewPodcast?cc=u
 VIEW_ALL_COLLECTIONS = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewSeeAll?id=%d"
 SCHOOL = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewArtist?id=%d"
 VIEW_CATEGORY_COLLECTIONS = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewGenre?a=%d&id=%d"
+VIEW_TAGGED_COLLECTIONS_TEMPLATE = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewTagged?%s"
 
 downloader = Downloader()
 
@@ -47,6 +54,15 @@ def extractCategoryId(url):
     if match:
         ret = str(match.group(1))
         return ret
+    else:
+        return None
+    
+def extractExtraId(url):
+    query = urlparse(url).query
+    values = parse_qs(query)
+    tag = values.get('tag')
+    if tag:
+        return tag[0] # What happens if more?
     else:
         return None
 
@@ -93,17 +109,36 @@ def getCategoryCollections(artistId, categoryId):
     
     return ret
 
-def getAllCategories(artistId):
-    categories_url = SCHOOL % artistId
+def getTaggedCollections(artistId, tagName):
+    params = {'tag':tagName, 'id':artistId}
     
-    ret = downloader.gotoURL(url=categories_url)
+    query = urlencode(params)
+    
+    collections_url = VIEW_TAGGED_COLLECTIONS_TEMPLATE % query
+    
+    ret = downloader.gotoURL(url=collections_url)
     if ret:
         source = ret.HTML
-        ret = extractSchoolCategories(source)
+        ret = extractCollections(source)
     else:
         ret = {}
     
     return ret
+
+def getCategoriesExtras(artistId):
+    categories_url = SCHOOL % artistId
+    
+    parser = downloader.gotoURL(url=categories_url)
+    if parser:
+        source = parser.HTML
+        cats = extractSchoolCategories(source)
+        extras = extractExtras(source)
+    else:
+        cats = {}
+        extras = {}
+        
+    
+    return cats, extras
 
 @plugin.route('/schools/<schoolType>/')
 def showSchoolList(schoolType):
@@ -113,14 +148,9 @@ def showSchoolList(schoolType):
         'url': plugin.url_for('school', artistId=extractArtistId(url)), 
         } for label, url in label_urls]
     return plugin.add_items(sorted(items, key= lambda item: item['label']))
-    
-@plugin.route('/school/<artistId>/')
-def school(artistId):
-    items = [
-        {'label': 'All Collections', 'url': plugin.url_for('allCollections', artistId=artistId)},
-    ]
-    categories = getAllCategories(int(artistId))
 
+def getCategoryItems(categories, artistId):
+    items = []
     for category, href in categories.iteritems():
         categoryId=extractCategoryId(href)
         
@@ -131,6 +161,34 @@ def school(artistId):
         items += [
                   {'label': category, 'url': plugin.url_for('categoryCollections', artistId=artistId, categoryId=categoryId)},
                   ]
+    return items
+
+def getExtraItems(categories, artistId):
+    items = []
+    for category, href in categories.iteritems():
+        tagName=extractExtraId(href)
+        
+        if tagName is None:
+            print "Tossing extra (no tagName): %s (%s)" % (category, href)
+            continue
+        
+        items += [
+                  {'label': category, 'url': plugin.url_for(taggedCollections, artistId=artistId, tagName=tagName)},
+                  ]
+    return items
+           
+@plugin.route('/school/<artistId>/')
+def school(artistId):
+    items = [
+        {'label': 'All Collections', 'url': plugin.url_for('allCollections', artistId=artistId)},
+    ]
+    
+    categories, extras = getCategoriesExtras(int(artistId))
+    
+    for extra in extras:
+        items += getExtraItems(extras[extra], artistId)
+    
+    items += getCategoryItems(categories, artistId)
 
     return plugin.add_items(items)
 
@@ -151,6 +209,11 @@ def allCollections(artistId):
 @plugin.route('/school/<artistId>/category/<categoryId>')
 def categoryCollections(artistId, categoryId):
     collections = getCategoryCollections(int(artistId), int(categoryId)).iteritems()  
+    return renderCollections(collections)
+
+@plugin.route('/school/<artistId>/category/<tagName>')
+def taggedCollections(artistId, tagName):
+    collections = getTaggedCollections(int(artistId), tagName).iteritems()  
     return renderCollections(collections)
 
 

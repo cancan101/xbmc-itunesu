@@ -6,10 +6,13 @@ Created on Feb 21, 2012
 from TunesViewerBase import TunesViewerBase
 from constant_constants import USER_AGENT
 import gzip
-from StringIO import StringIO
+try:
+    import cStringIO as StringIO
+except ImportError:
+    import StringIO
 import logging
 from ParserSimple import Parser
-from BeautifulSoup import BeautifulSoup as BS, SoupStrainer as SS
+from BeautifulSoup import BeautifulSoup as BS
 from common import htmlentitydecode
 
 class Downloader( TunesViewerBase ):
@@ -27,7 +30,7 @@ class Downloader( TunesViewerBase ):
                 text = response.read()
                 if response_info.get('Content-Encoding') == 'gzip':
                     orig = len(text)
-                    f = gzip.GzipFile(fileobj=StringIO(text))
+                    f = gzip.GzipFile(fileobj=StringIO.StringIO(text))
                     try:
                         text = f.read()
                         logging.debug("Gzipped response: " + str(orig) + "->" + str(len(text)))
@@ -90,9 +93,7 @@ def extractSchools(source):
     
     return ret
 
-def extractSchoolCategories(source):
-    soup = BS(source)
-    parent_div = soup.find('div', {'class':'extra-list', 'metrics-loc':'Titledbox_Categories'})    
+def extractTitledbox(parent_div):
     categories_li = parent_div.findAll('li')
     categories_a = [s.find("a") for s in categories_li]
     
@@ -102,7 +103,14 @@ def extractSchoolCategories(source):
         href = category_a.get("href")
         ret[category] = href
         
-    return ret
+    return ret    
+
+def extractSchoolCategories(source):
+    soup = BS(source)
+    parent_div = soup.find('div', {'class':'extra-list', 'metrics-loc':'Titledbox_Categories'})
+    
+    return extractTitledbox(parent_div)
+
     
 def extractCollections(source):
     soup = BS(source)
@@ -135,14 +143,27 @@ def extractCollections(source):
     
     return ret
 
+def extractExtras(source):
+    soup = BS(source)
+    top_div = soup.find('div', {'class':'extra-list', 'metrics-loc':'Titledbox_Top Collections'})
+    extras = top_div.findNextSiblings('div', 'extra-list')
+    
+    ret = {}
+    for extra in extras:
+        extra_title = extra.get('metrics-loc').replace('Titledbox_', '')
+        ret[extra_title] = extractTitledbox(extra)
+    
+    return ret 
+    
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    url = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewArtist?id=341593265"#"http://itunes.apple.com/WebObjects/DZR.woa/wa/viewTopCollections?id=379060688"#"http://itunes.apple.com/WebObjects/DZR.woa/wa/viewPodcast?cc=us&id=354868877"#"http://itunes.apple.com/WebObjects/DZR.woa/wa/viewTagged?tag=MIT+OpenCourseWare&id=341593265"
+    url = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewArtist?cc=us&id=341649956"#"http://itunes.apple.com/WebObjects/DZR.woa/wa/viewArtist?id=341593265"#"http://itunes.apple.com/WebObjects/DZR.woa/wa/viewTopCollections?id=379060688"#"http://itunes.apple.com/WebObjects/DZR.woa/wa/viewPodcast?cc=us&id=354868877"#"http://itunes.apple.com/WebObjects/DZR.woa/wa/viewTagged?tag=MIT+OpenCourseWare&id=341593265"
     dl = Downloader()
     ret = dl.gotoURL(url)
     if ret:
         source = ret.HTML
-        print extractSchoolCategories(source)
+        print extractExtras(source)
+#        print extractSchoolCategories(source)
 #        print extractCollections(source)
 #        print extractSchools(source)
 
