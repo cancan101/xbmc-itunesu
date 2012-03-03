@@ -75,6 +75,7 @@ def show_homepage():
     ]
     return plugin.add_items(items)
 
+@plugin.cacheReturn()
 def getAllSchools(schoolType):
     allSchoolsURL = SCHOOL_LIST % schoolType
     
@@ -86,6 +87,7 @@ def getAllSchools(schoolType):
     
     return ret
 
+@plugin.cacheReturn()
 def getAllCollections(artistId):
     collections_url = VIEW_ALL_COLLECTIONS % artistId
     
@@ -97,6 +99,7 @@ def getAllCollections(artistId):
     
     return ret
 
+@plugin.cacheReturn()
 def getCategoryCollections(artistId, categoryId):
     collections_url = VIEW_CATEGORY_COLLECTIONS % (artistId, categoryId)
     
@@ -108,6 +111,7 @@ def getCategoryCollections(artistId, categoryId):
     
     return ret
 
+@plugin.cacheReturn()
 def getTaggedCollections(artistId, tagName):
     params = {'tag':tagName, 'id':artistId}
     
@@ -123,6 +127,7 @@ def getTaggedCollections(artistId, tagName):
     
     return ret
 
+@plugin.cacheReturn()
 def getCategoriesExtras(artistId):
     categories_url = SCHOOL % artistId
     
