@@ -128,19 +128,29 @@ def getTaggedCollections(artistId, tagName):
     return ret
 
 @plugin.cacheReturn()
-def getCategoriesExtras(artistId):
-    categories_url = SCHOOL % artistId
+def getSchoolPage(artistId):
+    school_url = SCHOOL % artistId
     
-    source = downloader.getSource(url=categories_url)
+    return downloader.getSource(url=school_url)
+    
+def getExtras(artistId):
+    source = getSchoolPage(artistId)
     if source:
-        cats = extractSchoolCategories(source)
         extras = extractExtras(source)
     else:
-        cats = {}
         extras = {}
-        
     
-    return cats, extras
+    return extras
+
+
+def getCategories(artistId):
+    source = getSchoolPage(artistId)
+    if source:
+        cats = extractSchoolCategories(source)
+    else:
+        cats = {}
+        
+    return cats
 
 @plugin.route('/schools/<schoolType>/')
 def showSchoolList(schoolType):
@@ -178,6 +188,24 @@ def getExtraItems(categories, artistId):
                   {'label': category, 'url': plugin.url_for('taggedCollections', artistId=artistId, tagName=tagName)},
                   ]
     return items
+
+@plugin.route('/school/<artistId>/tagged/')
+def taggedCollectionList(artistId):
+    extras = getExtras(int(artistId))
+    items = []
+    for extra in extras:
+        items += getExtraItems(extras[extra], artistId)
+    
+    return plugin.add_items(items)
+
+@plugin.route('/school/<artistId>/category/')
+def categoryList(artistId):
+    items = []
+     
+    categories = getCategories(int(artistId))
+    items += getCategoryItems(categories, artistId)
+    
+    return plugin.add_items(items)
            
 @plugin.route('/school/<artistId>/')
 def school(artistId):
@@ -185,13 +213,14 @@ def school(artistId):
         {'label': 'All Collections', 'url': plugin.url_for('allCollections', artistId=artistId)},
     ]
     
-    categories, extras = getCategoriesExtras(int(artistId))
+    items += [
+        {'label': 'Tagged Collections', 'url': plugin.url_for('taggedCollectionList', artistId=artistId)},
+    ]
     
-    for extra in extras:
-        items += getExtraItems(extras[extra], artistId)
+    items += [
+        {'label': 'Categories', 'url': plugin.url_for('categoryList', artistId=artistId)},
+    ]
     
-    items += getCategoryItems(categories, artistId)
-
     return plugin.add_items(items)
 
 def renderCollections(collections):
@@ -213,7 +242,7 @@ def categoryCollections(artistId, categoryId):
     collections = getCategoryCollections(int(artistId), int(categoryId)).iteritems()  
     return renderCollections(collections)
 
-@plugin.route('/school/<artistId>/category/<tagName>')
+@plugin.route('/school/<artistId>/tagged/<tagName>')
 def taggedCollections(artistId, tagName):
     collections = getTaggedCollections(int(artistId), tagName).iteritems()  
     return renderCollections(collections)
