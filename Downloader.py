@@ -73,7 +73,14 @@ class Downloader( TunesViewerBase ):
         if source:
             return self.processPage(url, source)
         else:
-            return None                 
+            return None
+    
+    def getSource(self, url):    
+        parser = self.gotoURL(url=url)
+        if parser:
+            return parser.HTML
+        else:
+            return None
 
 def extractSchools(source):
     soup = BS(source)
