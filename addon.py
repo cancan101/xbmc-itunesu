@@ -31,7 +31,7 @@ def noneIsEmpty(val):
         return val
 
 def extractArtistId(url):
-    regex = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewArtist\?id=(\d{9})"
+    regex = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewArtist\?id=(\d{9})" ## TODO use urlparse / parse_qs
     match = re.search(regex, url)
     if match:
         ret = str(match.group(1))
@@ -40,7 +40,7 @@ def extractArtistId(url):
         return None
     
 def extractCollectionId(url):
-    regex = "http://itunes.apple.com/us/itunes-u/[\w\-\.]*/id(\d{9})"
+    regex = "http://itunes.apple.com/us/itunes-u/[\w\-\.]*/id(\d{9})" ## TODO use urlparse / parse_qs
     match = re.search(regex, url)
     if match:
         ret = str(match.group(1))
@@ -49,7 +49,7 @@ def extractCollectionId(url):
         return None
     
 def extractCategoryId(url):
-    regex = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewGenre\?a=\d{9}&id=(\d{8})"
+    regex = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewGenre\?a=\d{9}&id=(\d{8})" ## TODO use urlparse / parse_qs
     match = re.search(regex, url)
     if match:
         ret = str(match.group(1))
@@ -76,9 +76,10 @@ def show_homepage():
     return plugin.add_items(items)
 
 def getAllSchools(schoolType):
-    ret = downloader.gotoURL(url=SCHOOL_LIST%schoolType)
-    if ret:
-        source = ret.HTML
+    allSchoolsURL = SCHOOL_LIST % schoolType
+    
+    source = downloader.getSource(url=allSchoolsURL)
+    if source:
         ret = extractSchools(source)
     else:
         ret = {}
@@ -88,9 +89,8 @@ def getAllSchools(schoolType):
 def getAllCollections(artistId):
     collections_url = VIEW_ALL_COLLECTIONS % artistId
     
-    ret = downloader.gotoURL(url=collections_url)
-    if ret:
-        source = ret.HTML
+    source = downloader.getSource(url=collections_url)
+    if source:
         ret = extractCollections(source)
     else:
         ret = {}
@@ -100,9 +100,8 @@ def getAllCollections(artistId):
 def getCategoryCollections(artistId, categoryId):
     collections_url = VIEW_CATEGORY_COLLECTIONS % (artistId, categoryId)
     
-    ret = downloader.gotoURL(url=collections_url)
-    if ret:
-        source = ret.HTML
+    source = downloader.getSource(url=collections_url)
+    if source:
         ret = extractCollections(source)
     else:
         ret = {}
@@ -116,9 +115,8 @@ def getTaggedCollections(artistId, tagName):
     
     collections_url = VIEW_TAGGED_COLLECTIONS_TEMPLATE % query
     
-    ret = downloader.gotoURL(url=collections_url)
-    if ret:
-        source = ret.HTML
+    source = downloader.getSource(url=collections_url)
+    if source:
         ret = extractCollections(source)
     else:
         ret = {}
@@ -128,9 +126,8 @@ def getTaggedCollections(artistId, tagName):
 def getCategoriesExtras(artistId):
     categories_url = SCHOOL % artistId
     
-    parser = downloader.gotoURL(url=categories_url)
-    if parser:
-        source = parser.HTML
+    source = downloader.getSource(url=categories_url)
+    if source:
         cats = extractSchoolCategories(source)
         extras = extractExtras(source)
     else:
@@ -173,7 +170,7 @@ def getExtraItems(categories, artistId):
             continue
         
         items += [
-                  {'label': category, 'url': plugin.url_for(taggedCollections, artistId=artistId, tagName=tagName)},
+                  {'label': category, 'url': plugin.url_for('taggedCollections', artistId=artistId, tagName=tagName)},
                   ]
     return items
            
