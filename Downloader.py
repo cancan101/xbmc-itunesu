@@ -137,9 +137,10 @@ def extractCollections(source):
             if artwork_div is not None:
                 artwork = artwork_div.find('img', 'artwork src-swap')
                 if artwork is not None:
-                    iconImage = str(artwork.get('src-swap'))
-                    thumbnail = iconImage.replace('.75x75-65', '')
-              
+                    artworkImage = str(artwork.get('src-swap'))
+                    thumbnail = artworkImage.replace('.75x75-65', '')
+                    iconImage = thumbnail ### http://forum.xbmc.org/showthread.php?p=53916
+                    
             title = title_orig = htmlentitydecode(collection.text)
             href = collection.get("href")
             count = 0
