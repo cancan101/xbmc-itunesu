@@ -29,36 +29,62 @@ def noneIsEmpty(val):
         return ''
     else:
         return val
+    
+def getQueryStringFromURL(url):
+    parseResult = urlparse(url)
+    
+    if hasattr(parseResult, 'query'):
+        return parseResult.query
+    else:
+        return parseResult[4]
 
 def extractArtistId(url):
-    regex = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewArtist\?id=(\d{9})" ## TODO use urlparse / parse_qs
+    regex = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewArtist\?id=(\d{9})"
     match = re.search(regex, url)
     if match:
         ret = str(match.group(1))
         return ret
     else:
-        return None
+        query = getQueryStringFromURL(url)
+        values = parse_qs(query)
+        id = values.get('id')
+        if id:
+            return id[0] # What happens if more?
+        else:
+            return None
     
 def extractCollectionId(url):
-    regex = "http://itunes.apple.com/us/itunes-u/[\w\-\.]*/id(\d{9})" ## TODO use urlparse / parse_qs
+    regex = "http://itunes.apple.com/us/itunes-u/[\w\-\.]*/id(\d{9})"
     match = re.search(regex, url)
     if match:
         ret = str(match.group(1))
         return ret
     else:
-        return None
+        query = getQueryStringFromURL(url)
+        values = parse_qs(query)
+        id = values.get('id')
+        if id:
+            return id[0] # What happens if more?
+        else:
+            return None
     
 def extractCategoryId(url):
-    regex = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewGenre\?a=\d{9}&id=(\d{8})" ## TODO use urlparse / parse_qs
+    regex = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewGenre\?a=\d{9}&id=(\d{8})"
     match = re.search(regex, url)
     if match:
         ret = str(match.group(1))
         return ret
     else:
-        return None
+        query = getQueryStringFromURL(url)
+        values = parse_qs(query)
+        id = values.get('id')
+        if id:
+            return id[0] # What happens if more?
+        else:
+            return None
     
 def extractExtraId(url):
-    query = urlparse(url).query
+    query = getQueryStringFromURL(url) ## Also use regex?
     values = parse_qs(query)
     tag = values.get('tag')
     if tag:
@@ -209,7 +235,9 @@ def categoryList(artistId):
            
 @plugin.route('/school/<artistId>/')
 def school(artistId):
-    items = [
+    items = []
+    
+    items += [
         {'label': 'All Collections', 'url': plugin.url_for('allCollections', artistId=artistId)},
     ]
     
@@ -257,10 +285,11 @@ def showCollection(collectionId):
     
     for mediaItem in ret.mediaItems:
         items +=    [
-                      {'label': mediaItem.title,
+                      {
+                       'label': mediaItem.title,
                        'url': mediaItem.previewurl,
-                        'is_playable': True,
-                        'is_folder': False,
+                       'is_playable': True,
+                       'is_folder': False,
                         }
                     ]
     
