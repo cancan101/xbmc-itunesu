@@ -7,6 +7,12 @@ try:
 	from lxml.etree import fromstring
 except ImportError:
 	from xml.etree.ElementTree import fromstring
+	
+	
+try:
+	import json
+except ImportError:
+	import simplejson as json
 
 import lxml.html
 
@@ -266,15 +272,13 @@ class ParserBase(object):
 			out = out[:-6]
 			if dom.tag == "html":
 				try:
-					title_element = dom.xpath("/html/head/title")
-					if title_element is not None:
-						title_element_first = title_element[0]
-						if title_element_first is not None:
-							try:
-								title = title_element_first.text_content()
-							except:
-								title = ""
-							self.Title = title
+					title_element = dom.xpath("/html/head/title")[0]
+					try:
+						self.Title = title_element.text_content()
+					except Exception, e:
+						### For some reason text_content sometimes throws Exception
+						logging.warn('Error extracting title: ' + str(e))
+						self.Title = "TunesViewer"						
 				except IndexError, e:
 					logging.warn('Error extracting title: ' + str(e))
 					self.Title = "TunesViewer"
@@ -487,7 +491,6 @@ class ParserBase(object):
 			     element.get("comparison").find("less") > -1)):
 				return #Ignore child nodes.
 			if element.tag == "tr" and element.get("dnd-clipboard-data"):
-				import json
 				data = json.loads(element.get("dnd-clipboard-data"))
 				itemid = ""
 				title = ""
