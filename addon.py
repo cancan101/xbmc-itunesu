@@ -30,6 +30,9 @@ def noneIsEmpty(val):
     else:
         return val
     
+def sortByLabel(items):
+    return sorted(items, key=lambda x:x['label'])
+   
 def getQueryStringFromURL(url):
     parseResult = urlparse(url)
     
@@ -196,7 +199,7 @@ def showSchoolList(schoolType):
     items = [{'label': label, 
         'url': plugin.url_for('school', artistId=extractArtistId(url)), 
         } for label, url in label_urls]
-    return plugin.add_items(sorted(items, key= lambda item: item['label']))
+    return plugin.add_items(sortByLabel(items))
 
 def getCategoryItems(categories, artistId):
     items = []
@@ -233,7 +236,7 @@ def taggedCollectionList(artistId):
     for extra in extras:
         items += getExtraItems(extras[extra], artistId)
     
-    return plugin.add_items(items)
+    return plugin.add_items(sortByLabel(items))
 
 @plugin.route('/school/<artistId>/category/')
 def categoryList(artistId):
@@ -242,7 +245,7 @@ def categoryList(artistId):
     categories = getCategories(int(artistId))
     items += getCategoryItems(categories, artistId)
     
-    return plugin.add_items(items)
+    return plugin.add_items(sortByLabel(items))
            
 @plugin.route('/school/<artistId>/')
 def school(artistId):
