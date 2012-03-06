@@ -37,8 +37,16 @@ def getQueryStringFromURL(url):
         return parseResult.query
     else:
         return parseResult[4]
+    
+def unescape(s):
+    s = s.replace("&lt;", "<")
+    s = s.replace("&gt;", ">")
+    # this has to be last:
+    s = s.replace("&amp;", "&")
+    return s
 
 def extractArtistId(url):
+    url = unescape(url)
     regex = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewArtist\?id=(\d{9})"
     match = re.search(regex, url)
     if match:
@@ -54,6 +62,7 @@ def extractArtistId(url):
             return None
     
 def extractCollectionId(url):
+    url = unescape(url)
     regex = "http://itunes.apple.com/us/itunes-u/[\w\-\.]*/id(\d{9})"
     match = re.search(regex, url)
     if match:
@@ -69,6 +78,7 @@ def extractCollectionId(url):
             return None
     
 def extractCategoryId(url):
+    url = unescape(url)
     regex = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewGenre\?a=\d{9}&id=(\d{8})"
     match = re.search(regex, url)
     if match:
@@ -84,6 +94,7 @@ def extractCategoryId(url):
             return None
     
 def extractExtraId(url):
+    url = unescape(url)
     query = getQueryStringFromURL(url) ## Also use regex?
     values = parse_qs(query)
     tag = values.get('tag')
