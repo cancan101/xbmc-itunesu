@@ -119,7 +119,7 @@ def show_homepage():
 def getAllSchools(schoolType):
     allSchoolsURL = SCHOOL_LIST % schoolType
     
-    source = downloader.getSource(url=allSchoolsURL)
+    source = downloader.getSource2(url=allSchoolsURL)
     if source:
         ret = extractSchools(source)
     else:
@@ -131,7 +131,7 @@ def getAllSchools(schoolType):
 def getAllCollections(artistId):
     collections_url = VIEW_ALL_COLLECTIONS % artistId
     
-    source = downloader.getSource(url=collections_url)
+    source = downloader.getSource2(url=collections_url)
     if source:
         ret = extractCollections(source)
     else:
@@ -143,7 +143,7 @@ def getAllCollections(artistId):
 def getCategoryCollections(artistId, categoryId):
     collections_url = VIEW_CATEGORY_COLLECTIONS % (artistId, categoryId)
     
-    source = downloader.getSource(url=collections_url)
+    source = downloader.getSource2(url=collections_url)
     if source:
         ret = extractCollections(source)
     else:
@@ -159,7 +159,7 @@ def getTaggedCollections(artistId, tagName):
     
     collections_url = VIEW_TAGGED_COLLECTIONS_TEMPLATE % query
     
-    source = downloader.getSource(url=collections_url)
+    source = downloader.getSource2(url=collections_url)
     if source:
         ret = extractCollections(source)
     else:
@@ -171,7 +171,7 @@ def getTaggedCollections(artistId, tagName):
 def getSchoolPage(artistId):
     school_url = SCHOOL % artistId
     
-    return downloader.getSource(url=school_url)
+    return downloader.getSource2(url=school_url)
     
 def getExtras(artistId):
     source = getSchoolPage(artistId)
@@ -293,14 +293,15 @@ def taggedCollections(artistId, tagName):
 @plugin.route('/collection/<collectionId>/')
 def showCollection(collectionId):
     url = VIEW_ITEM_BASE%(int(collectionId))
-    ret = downloader.gotoURL(url=url)
+    mediaItems = downloader.getMediaItems(url)
     
     items = []
     
-    for mediaItem in ret.mediaItems:
+    for mediaItem in mediaItems:
         items +=    [
                       {
                        'label': mediaItem.title,
+                       'label2':'label2',
                        'url': mediaItem.previewurl,
                        'is_playable': True,
                        'is_folder': False,
