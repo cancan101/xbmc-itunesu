@@ -11,9 +11,19 @@ try:
 except ImportError:
 	import StringIO
 import logging
-from ParserSimple import Parser
 from BeautifulSoup import BeautifulSoup as BS
-from common import htmlentitydecode
+
+def htmlentitydecode(s):
+	if s:
+		# This unescape function is an internal function of
+		# HTMLParser but let's use it, as it does a better job than
+		# what we have so far.
+		#
+		# See: hg.python.org/cpython/file/2.7/Lib/HTMLParser.py
+		import HTMLParser
+		return HTMLParser.HTMLParser().unescape(s).replace("&apos;", "'")
+	else:
+		return ""
 
 class Downloader( TunesViewerBase ):
 	def __init__(self):
@@ -46,46 +56,7 @@ class Downloader( TunesViewerBase ):
 			return None
 		
 		return text
-	
-	def processPage(self, url, source):
-		#Parse the page and display:
-		logging.debug("PARSING " + url)
-		parser = Parser(url, contentType=None, source=source)
-		if parser.Redirect != "":
-			logging.debug("REDIRECT: " + parser.Redirect)
-			self.gotoURL(parser.Redirect)
-		elif len(parser.mediaItems) == 1 and parser.singleItem:
-			print "Single item description page."
-			#Single item description page.
-#			self.startDownload(parser.mediaItems[0])
-			return parser
-		else: #normal page
-			logging.debug("normal page: %s" % url)
-			logging.debug("Title: %s" % parser.Title)
-			logging.debug("ITEMS: " + str(len(parser.mediaItems)))
-#			logging.debug(parser.HTML)
-			for i in range(len(parser.tabMatches)):
-				logging.debug("Tab %s %s" % (parser.tabMatches[i], parser.tabLinks[i]))
-			return parser
-				
-	def gotoURL(self, url):
-		source = self.loadPage(url=url)
-		if source:
-			return self.processPage(url, source)
-		else:
-			return None
-	
-	def getMediaItems(self, url):
-		ret = self.gotoURL(url=url)
-		return ret.mediaItems
-	
-	def getSource(self, url):
-		parser = self.gotoURL(url=url)
-		if parser:
-			return parser.HTML
-		else:
-			return None
-		
+						
 	def getSource2(self, url):
 		return self.loadPage(url=url)
 
