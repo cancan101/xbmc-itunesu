@@ -36,7 +36,7 @@ def noneIsEmpty(val):
 	
 def sortByLabel(items):
 	return sorted(items, key=lambda x:x['label'])
-   
+
 def getQueryStringFromURL(url):
 	parseResult = urlparse(url)
 	
@@ -199,10 +199,21 @@ def getCategories(artistId):
 @plugin.route('/schools/<schoolType>/')
 def showSchoolList(schoolType):
 	label_urls = getAllSchools(schoolType).iteritems()
-			
-	items = [{'label': label, 
-		'url': plugin.url_for('school', artistId=extractArtistId(url)), 
-		} for label, url in label_urls]
+	items = []
+	for label, url in label_urls:
+		artistId=extractArtistId(url)
+		
+		if artistId is None:
+			print "Tossing school (no artistId): %s (%s)" % (schoolType, url)
+			continue
+				
+		items.append(
+					{
+					'label': label, 
+					'url': plugin.url_for('school', artistId=artistId), 
+					}
+		)
+	
 	return plugin.add_items(sortByLabel(items))
 
 def getCategoryItems(categories, artistId):
@@ -215,8 +226,8 @@ def getCategoryItems(categories, artistId):
 			continue
 		
 		items += [
-				  {'label': category, 'url': plugin.url_for('categoryCollections', artistId=artistId, categoryId=categoryId)},
-				  ]
+					{'label': category, 'url': plugin.url_for('categoryCollections', artistId=artistId, categoryId=categoryId)},
+				 ]
 	return items
 
 def getExtraItems(categories, artistId):
@@ -229,8 +240,8 @@ def getExtraItems(categories, artistId):
 			continue
 		
 		items += [
-				  {'label': category, 'url': plugin.url_for('taggedCollections', artistId=artistId, tagName=tagName)},
-				  ]
+				 	{'label': category, 'url': plugin.url_for('taggedCollections', artistId=artistId, tagName=tagName)},
+				 ]
 	return items
 
 @plugin.route('/school/<artistId>/tagged/')
@@ -245,12 +256,12 @@ def taggedCollectionList(artistId):
 @plugin.route('/school/<artistId>/category/')
 def categoryList(artistId):
 	items = []
-	 
+	
 	categories = getCategories(int(artistId))
 	items += getCategoryItems(categories, artistId)
 	
 	return plugin.add_items(sortByLabel(items))
-		   
+		
 @plugin.route('/school/<artistId>/')
 def school(artistId):
 	items = []
