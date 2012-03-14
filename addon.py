@@ -321,13 +321,16 @@ def formatDuration(durationMS):
 
 	mins = seconds / 60
 	
-	return "%d:%02d" % (hour, mins)	
-	
+	return "%d:%02d" % (hour, mins)
+
+@plugin.cacheReturn()
+def getCollectionMediaItemsDicts(collectionId):
+	url = VIEW_ITEM_BASE%(int(collectionId))
+	return parseString(downloader.getSource2(url=url))
+		
 @plugin.route('/collection/<collectionId>/')
 def showCollection(collectionId):
-	url = VIEW_ITEM_BASE%(int(collectionId))
-	mediaItemsDicts = parseString(downloader.getSource2(url=url))
-#	mediaItems = makeTunesResults(mediaItemsDicts)
+	mediaItemsDicts = getCollectionMediaItemsDicts(collectionId)
 	
 	items = []
 	
