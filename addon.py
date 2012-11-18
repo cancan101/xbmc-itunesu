@@ -54,10 +54,10 @@ def unescape(s):
 
 def extractArtistId(url):
 	url = unescape(url)
-	regex = "http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewArtist\?id=(\d{9})"
+	regex = "http(s)?://itunes.apple.com/WebObjects/MZStore.woa/wa/viewArtist\?id=(?P<id>\d{9})"
 	match = re.search(regex, url)
 	if match:
-		ret = str(match.group(1))
+		ret = str(match.group("id"))
 		return ret
 	else:
 		query = getQueryStringFromURL(url)
@@ -70,10 +70,10 @@ def extractArtistId(url):
 	
 def extractCollectionId(url):
 	url = unescape(url)
-	regex = "http://itunes.apple.com/us/itunes-u/[\w\-\.]*/id(\d{9})"
+	regex = "http(s)?://itunes.apple.com/us/itunes-u/[\w\-\.]*/id(?P<id>\d{9})"
 	match = re.search(regex, url)
 	if match:
-		ret = str(match.group(1))
+		ret = str(match.group("id"))
 		return ret
 	else:
 		query = getQueryStringFromURL(url)
@@ -86,10 +86,10 @@ def extractCollectionId(url):
 	
 def extractCategoryId(url):
 	url = unescape(url)
-	regex = "http://itunes.apple.com/WebObjects/DZR.woa/wa/viewGenre\?a=\d{9}&id=(\d{8})"
+	regex = "http(s)?://itunes.apple.com/WebObjects/DZR.woa/wa/viewGenre\?a=\d{9}&id=(?P<id>\d{8})"
 	match = re.search(regex, url)
 	if match:
-		ret = str(match.group(1))
+		ret = str(match.group("id"))
 		return ret
 	else:
 		query = getQueryStringFromURL(url)
