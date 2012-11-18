@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from xbmcswift import Plugin
+from xbmcswift2 import Plugin
 from Downloader import extractSchools, Downloader, extractCollections,\
 	extractSchoolCategories, extractExtras
 import re
@@ -113,13 +113,13 @@ def extractExtraId(url):
 @plugin.route('/')
 def show_homepage():
 	items = [
-		{'label': 'Universities & Colleges', 'url': plugin.url_for('showSchoolList', schoolType='EDU')},
-		{'label': 'K-12', 'url': plugin.url_for('showSchoolList', schoolType='K12')},
-		{'label': 'Beyond Campus', 'url': plugin.url_for('showSchoolList', schoolType='ORG')},
+		{'label': 'Universities & Colleges', 'path': plugin.url_for('showSchoolList', schoolType='EDU')},
+		{'label': 'K-12', 'path': plugin.url_for('showSchoolList', schoolType='K12')},
+		{'label': 'Beyond Campus', 'path': plugin.url_for('showSchoolList', schoolType='ORG')},
 	]
-	return plugin.add_items(items)
+	return plugin.finish(items)
 
-@plugin.cacheReturn()
+@plugin.cached()
 def getAllSchools(schoolType):
 	allSchoolsURL = SCHOOL_LIST % schoolType
 	
@@ -131,7 +131,7 @@ def getAllSchools(schoolType):
 	
 	return ret
 
-@plugin.cacheReturn()
+@plugin.cached()
 def getAllCollections(artistId):
 	collections_url = VIEW_ALL_COLLECTIONS % artistId
 	
@@ -143,7 +143,7 @@ def getAllCollections(artistId):
 	
 	return ret
 
-@plugin.cacheReturn()
+@plugin.cached()
 def getCategoryCollections(artistId, categoryId):
 	collections_url = VIEW_CATEGORY_COLLECTIONS % (artistId, categoryId)
 	
@@ -155,7 +155,7 @@ def getCategoryCollections(artistId, categoryId):
 	
 	return ret
 
-@plugin.cacheReturn()
+@plugin.cached()
 def getTaggedCollections(artistId, tagName):
 	params = {'tag':tagName, 'id':artistId}
 	
@@ -171,7 +171,7 @@ def getTaggedCollections(artistId, tagName):
 	
 	return ret
 
-@plugin.cacheReturn()
+@plugin.cached()
 def getSchoolPage(artistId):
 	school_url = SCHOOL % artistId
 	
@@ -210,11 +210,11 @@ def showSchoolList(schoolType):
 		items.append(
 					{
 					'label': label, 
-					'url': plugin.url_for('school', artistId=artistId), 
+					'path': plugin.url_for('school', artistId=artistId), 
 					}
 		)
 	
-	return plugin.add_items(sortByLabel(items))
+	return plugin.finish(sortByLabel(items))
 
 def getCategoryItems(categories, artistId):
 	items = []
@@ -226,7 +226,7 @@ def getCategoryItems(categories, artistId):
 			continue
 		
 		items += [
-					{'label': category, 'url': plugin.url_for('categoryCollections', artistId=artistId, categoryId=categoryId)},
+					{'label': category, 'path': plugin.url_for('categoryCollections', artistId=artistId, categoryId=categoryId)},
 				 ]
 	return items
 
@@ -240,7 +240,7 @@ def getExtraItems(categories, artistId):
 			continue
 		
 		items += [
-				 	{'label': category, 'url': plugin.url_for('taggedCollections', artistId=artistId, tagName=tagName)},
+				 	{'label': category, 'path': plugin.url_for('taggedCollections', artistId=artistId, tagName=tagName)},
 				 ]
 	return items
 
@@ -251,7 +251,7 @@ def taggedCollectionList(artistId):
 	for extra in extras:
 		items += getExtraItems(extras[extra], artistId)
 	
-	return plugin.add_items(sortByLabel(items))
+	return plugin.finish(sortByLabel(items))
 
 @plugin.route('/school/<artistId>/category/')
 def categoryList(artistId):
@@ -260,25 +260,25 @@ def categoryList(artistId):
 	categories = getCategories(int(artistId))
 	items += getCategoryItems(categories, artistId)
 	
-	return plugin.add_items(sortByLabel(items))
+	return plugin.finish(sortByLabel(items))
 		
 @plugin.route('/school/<artistId>/')
 def school(artistId):
 	items = []
 	
 	items += [
-		{'label': 'All Collections', 'url': plugin.url_for('allCollections', artistId=artistId)},
+		{'label': 'All Collections', 'path': plugin.url_for('allCollections', artistId=artistId)},
 	]
 	
 	items += [
-		{'label': 'Tagged Collections', 'url': plugin.url_for('taggedCollectionList', artistId=artistId)},
+		{'label': 'Tagged Collections', 'path': plugin.url_for('taggedCollectionList', artistId=artistId)},
 	]
 	
 	items += [
-		{'label': 'Categories', 'url': plugin.url_for('categoryList', artistId=artistId)},
+		{'label': 'Categories', 'path': plugin.url_for('categoryList', artistId=artistId)},
 	]
 	
-	return plugin.add_items(items)
+	return plugin.finish(items)
 
 def renderCollections(collections):
 	items = []
@@ -291,12 +291,12 @@ def renderCollections(collections):
 		items.append(
 					{
 					'label': label, 
-					'url': plugin.url_for('showCollection', collectionId=collectionId),
-					'iconImage':noneIsEmpty(data.get('iconImage')), 
+					'path': plugin.url_for('showCollection', collectionId=collectionId),
+					'icon':noneIsEmpty(data.get('iconImage')), 
 					'thumbnail': noneIsEmpty(data.get('thumbnail')),
 					}
 		)
-	return plugin.add_items(sorted(items, key= lambda item: item['label']))
+	return plugin.finish(sorted(items, key= lambda item: item['label']))
 
 @plugin.route('/school/<artistId>/collections/')
 def allCollections(artistId):
@@ -323,7 +323,7 @@ def formatDuration(durationMS):
 	
 	return "%d:%02d" % (hour, mins)
 
-@plugin.cacheReturn()
+@plugin.cached()
 def getCollectionMediaItemsDicts(collectionId):
 	url = VIEW_ITEM_BASE%(int(collectionId))
 	return parseString(downloader.getSource2(url=url))
@@ -372,11 +372,10 @@ def showCollection(collectionId):
 		items +=	[
 					  {
 					   'label': title,
-					   'iconImage': iconImage, 
+					   'icon': iconImage, 
 					   'thumbnail': thumbnail,
-					   'url': mediaURL,
+					   'path': mediaURL,
 					   'is_playable': True,
-					   'is_folder': False,
 					   'info':{
 #							'count': itemid,
 							'plot': description, 
@@ -401,7 +400,7 @@ def showCollection(collectionId):
 					   }
 					]
 	
-	return plugin.add_items(items)  
+	return plugin.finish(items)  
 
 if __name__ == '__main__': 
 	plugin.run()
